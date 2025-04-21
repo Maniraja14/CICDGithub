@@ -34,7 +34,7 @@ jobs:
           box install testbox
           box server start port=8080 --background
           sleep 10
-          curl -s http://127.0.0.1:8080/tests/runner.cfm?testkey=1 > result.json
+          curl -s http://127.0.0.1:8080/tests/runner.cfm?testkey=2 > result.json
           cat result.json
         env:
           CFENGINE: lucee
