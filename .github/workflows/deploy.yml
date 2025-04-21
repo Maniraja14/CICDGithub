@@ -23,8 +23,8 @@ jobs:
 
       - name: Install CommandBox
         run: |
-          curl -LO https://downloads.ortussolutions.com/ortussolutions/commandbox/5.9.0/commandbox-5.9.0.deb
-          sudo dpkg -i commandbox-5.9.0.deb
+          curl -LO https://downloads.ortussolutions.com/#/ortussolutions/commandbox/6.2.0/commandbox-debian-6.2.0.deb
+          sudo dpkg -i commandbox-debian-6.2.0.deb
           box version
 
 
