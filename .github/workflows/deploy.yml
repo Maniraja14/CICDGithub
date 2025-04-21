@@ -23,10 +23,10 @@ jobs:
 
       - name: Install CommandBox
         run: |
-          curl -fsSl https://downloads.ortussolutions.com/debs/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/box-keyring.gpg > /dev/null
-          echo "deb [signed-by=/usr/share/keyrings/box-keyring.gpg] https://downloads.ortussolutions.com/debs/noarch /" | sudo tee /etc/apt/sources.list.d/ortus.list
-          sudo apt-get update && sudo apt-get install box-installer
+          curl -LO https://downloads.ortussolutions.com/ortussolutions/commandbox/5.9.0/commandbox-5.9.0.deb
+          sudo dpkg -i commandbox-5.9.0.deb
           box version
+
 
       - name: Start Lucee Server and Run Tests
         run: |
