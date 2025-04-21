@@ -1,0 +1,56 @@
+name: CI - Test and Deploy via FTP
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  test:
+    name: Run TestBox Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Java (required for CommandBox)
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install CommandBox
+        run: |
+          curl -fsSl https://downloads.ortussolutions.com/debs/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/box-keyring.gpg > /dev/null
+          echo "deb [signed-by=/usr/share/keyrings/box-keyring.gpg] https://downloads.ortussolutions.com/debs/noarch /" | sudo tee /etc/apt/sources.list.d/ortus.list
+          sudo apt-get update && sudo apt-get install box-installer
+          box version
+
+      - name: Start Lucee Server and Run Tests
+        run: |
+          box install
+          box server start port=8080 --background
+          sleep 10  # Wait for server to start
+          box testbox run runner='http://127.0.0.1:8080/tests/runner.cfm'
+        env:
+          CFENGINE: lucee
+
+  # deploy:
+  #   name: FTP Deploy
+  #   runs-on: ubuntu-latest
+  #   needs: test  # 👈 This makes sure it only runs if 'test' job is successful
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: FTP Upload
+  #       uses: SamKirkland/FTP-Deploy-Action@4.3.0
+  #       with:
+  #         server: ${{ secrets.FTP_SERVER }}
+  #         username: ${{ secrets.FTP_USERNAME }}
+  #         password: ${{ secrets.FTP_PASSWORD }}
+  #         local-dir: ./  # Change this if needed
+  #         server-dir: /github  # Change this to your destination path
