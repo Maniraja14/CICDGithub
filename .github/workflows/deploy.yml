@@ -41,7 +41,7 @@ jobs:
         run: |
           box install
           box install testbox
-          testbox --version
+          box testbox --version
 
 
   # Job 2: Deploy to FTP server (only runs if test job passes)
