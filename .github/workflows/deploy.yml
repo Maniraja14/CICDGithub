@@ -60,4 +60,4 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./  # Change this if needed
-          server-dir: /github  # Change this to your destination path
+          server-dir: /github/  # Change this to your destination path
