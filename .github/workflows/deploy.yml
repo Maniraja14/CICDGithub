@@ -41,8 +41,7 @@ jobs:
         run: |
           box install
           box install testbox
-          box testbox --version
-
+          box testbox run directory="tests.specs" outputFormats="json" 
 
   # Job 2: Deploy to FTP server (only runs if test job passes)
   # deploy:
