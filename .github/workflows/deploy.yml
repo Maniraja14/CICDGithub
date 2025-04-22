@@ -41,7 +41,7 @@ jobs:
         run: |
           box install
           box install testbox
-          box testbox run --directory=tests.specs --reporter=json > result.json
+          box testbox run directory="tests.specs" outputFormats="json" > result.json
           cat result.json || true  # Use `|| true` to avoid exit 1 blocking the log
 
       # Step 5: Check test results and fail the job if tests fail
