@@ -1,63 +1,75 @@
+# Workflow Name
 name: CI - Test and Deploy via FTP
 
+# Trigger this workflow on push or pull request to main or staging branches
 on:
   push:
     branches: [main, staging]
   pull_request:
     branches: [main, staging]
+
 jobs:
+  # Job 1: Run TestBox Tests
   test:
     name: Run TestBox Tests
     runs-on: ubuntu-latest
 
     steps:
+      # Step 1: Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Install Java (required by CommandBox)
       - name: Install Java (required for CommandBox)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
 
+      # Step 3: Download and install CommandBox
       - name: Install CommandBox
         run: |
           curl -LO https://s3.amazonaws.com/downloads.ortussolutions.com/ortussolutions/commandbox/6.2.0/commandbox-debian-6.2.0.deb
           sudo dpkg -i commandbox-debian-6.2.0.deb
           box version
 
+      # Step 4: Start server and run tests with testkey=2
       - name: Run TestBox Tests
         run: |
           box install
           box install testbox
-          box server start port=8080 --background
-          sleep 10
-          curl -s http://127.0.0.1:8080/tests/runner.cfm?testkey=2 > result.json
+          box testbox run --directory=tests.specs --reporter=json > result.json
           cat result.json
         env:
           CFENGINE: lucee
+
+      # Step 5: Check test results and fail the job if tests fail
       - name: Check Test Results
         run: |
           if grep -q '"status":"failed"' result.json; then
-            echo "❌ Tests failed"
+            echo "Tests failed"
             exit 1
           else
-            echo "✅ Tests passed"
+            echo "Tests passed"
           fi
+
+  # Job 2: Deploy to FTP server (only runs if test job passes)
   deploy:
     name: FTP Deploy
     runs-on: ubuntu-latest
-    needs: test  # 👈 This makes sure it only runs if 'test' job is successful
+    needs: test  # This makes sure it only runs if 'test' job is successful
 
     steps:
+      # Step 1: Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Step 2: Deploy via FTP using SamKirkland FTP Deploy Action
       - name: FTP Upload
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./  # Change this if needed
-          server-dir: /github/  # Change this to your destination path
+          server: ${{ secrets.FTP_SERVER }}       #  FTP server address
+          username: ${{ secrets.FTP_USERNAME }}   #  FTP username
+          password: ${{ secrets.FTP_PASSWORD }}   #  FTP password
+          local-dir: ./                           # Local folder to upload
+          server-dir: /github/                    # Remote FTP folder (must end with /)
