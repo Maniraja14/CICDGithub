@@ -44,22 +44,22 @@ jobs:
           box testbox run --directory=tests.specs --reporter=json
 
   # Job 2: Deploy to FTP server (only runs if test job passes)
-  # deploy:
-  #   name: FTP Deploy
-  #   runs-on: ubuntu-latest
-  #   needs: test  # This makes sure it only runs if 'test' job is successful
+  deploy:
+    name: FTP Deploy
+    runs-on: ubuntu-latest
+    needs: test  # This makes sure it only runs if 'test' job is successful
 
-  #   steps:
-  #     # Step 1: Checkout repository code
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  #     # Step 2: Deploy via FTP using SamKirkland FTP Deploy Action
-  #     - name: FTP Upload
-  #       uses: SamKirkland/FTP-Deploy-Action@4.3.0
-  #       with:
-  #         server: ${{ secrets.FTP_SERVER }}       #  FTP server address
-  #         username: ${{ secrets.FTP_USERNAME }}   #  FTP username
-  #         password: ${{ secrets.FTP_PASSWORD }}   #  FTP password
-  #         local-dir: ./                           # Local folder to upload
-  #         server-dir: /github/                    # Remote FTP folder (must end with /)
+      # Step 2: Deploy via FTP using SamKirkland FTP Deploy Action
+      - name: FTP Upload
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}       #  FTP server address
+          username: ${{ secrets.FTP_USERNAME }}   #  FTP username
+          password: ${{ secrets.FTP_PASSWORD }}   #  FTP password
+          local-dir: ./                           # Local folder to upload
+          server-dir: /github/                    # Remote FTP folder (must end with /)
