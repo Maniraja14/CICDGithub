@@ -35,14 +35,10 @@ jobs:
 
       # Step 4: Start server and run tests with testkey=2
       - name: Run TestBox Tests
-        env:
-          TESTKEY: 1  # Or 2, etc. dynamically
-          CFENGINE: lucee  # Or adobe, etc. dynamically
         run: |
           box install
           box install testbox
           box testbox run --directory=tests.specs --reporter=json > test-results.json
-
 
       # Step 5: Verify test results
       - name: Verify Test Results
