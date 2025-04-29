@@ -30,7 +30,9 @@ jobs:
       - name: Install dependencies and run tests
         run: |
           box install
+          sleep 5  # Wait for CommandBox to fully initialize
           box install testbox
+          Sleep 5  # Wait for TestBox to fully initialize
           box testbox run --directory=tests.specs --reporter=json > test-results.json
           
           # Check test results
