@@ -1,7 +1,5 @@
-# Workflow Name
-name: CI - Test and Deploy via FTP
+name: CI - Test, Deploy, and Reinit
 
-# Trigger this workflow on push or pull request to main or staging branches
 on:
   push:
     branches: [main, staging]
@@ -9,74 +7,79 @@ on:
     branches: [main, staging]
 
 jobs:
-  # Job 1: Run TestBox Tests
   test:
     name: Run TestBox Tests
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Install Java (required by CommandBox)
       - name: Install Java (required for CommandBox)
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '11'
 
-      # Step 3: Download and install CommandBox
       - name: Install CommandBox
         run: |
           curl -LO https://s3.amazonaws.com/downloads.ortussolutions.com/ortussolutions/commandbox/6.2.0/commandbox-debian-6.2.0.deb
           sudo dpkg -i commandbox-debian-6.2.0.deb
           box version
 
-      # Step 4: Start server and run tests with testkey=2
-      - name: Run TestBox Tests
+      - name: Install dependencies and run tests
         run: |
           box install
           box install testbox
-          box testbox run --directory=tests.specs --reporter=json
+          box testbox run --directory=tests.specs --reporter=json > test-results.json
+          
+          # Check test results
+          if [ $(grep -o '"Failed": 0' test-results.json | wc -l) -eq 0 ]; then
+            echo "::error::Some tests failed"
+            cat test-results.json
+            exit 1
+          fi
+          echo "All tests passed successfully"
 
-  #     # Step 5: Verify test results
-  #     - name: Verify Test Results
-  #       run: |
-  #         if grep -q '"Failed": 0' test-results.json; then
-  #           echo "All tests passed."
-  #         else
-  #           echo "Tests failed. Stopping workflow."
-  #           exit 1
-  #         fi
+  deploy:
+    name: FTP Deploy
+    runs-on: ubuntu-latest
+    needs: test
 
-  # # Job 2: Deploy to FTP server (only runs if test job passes)
-  # deploy:
-  #   name: FTP Deploy
-  #   runs-on: ubuntu-latest
-  #   needs: test  # This makes sure it only runs if 'test' job is successful
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  #   steps:
-  #     # Step 1: Checkout repository code
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: ${{ secrets.FTP_DEPLOY_DIR }}/  # Should end with /
+          exclude: |
+            **/.git*
+            **/.github*
+            **/tests*
+            **/test-results.json
+            **/box.json
+            **/commandbox-debian-6.2.0.deb
 
-  #     # Step 2: Deploy via FTP using SamKirkland FTP Deploy Action
-  #     - name: FTP Upload
-  #       uses: SamKirkland/FTP-Deploy-Action@4.3.0
-  #       with:
-  #         server: ${{ secrets.FTP_SERVER }}       #  FTP server address
-  #         username: ${{ secrets.FTP_USERNAME }}   #  FTP username
-  #         password: ${{ secrets.FTP_PASSWORD }}   #  FTP password
-  #         local-dir: ./                           # Local folder to upload
-  #         server-dir: /github/                    # Remote FTP folder (must end with /)
-  # reinit:
-  #   name: Reinit Application
-  #   runs-on: ubuntu-latest
+  reinit:
+    name: Reinitialize Application
+    runs-on: ubuntu-latest
+    needs: deploy  # Only run after successful deployment
 
-  #   steps:
-  #     - name: Reinitialize Application
-  #       run: |
-  #         curl -X GET "${{ secrets.REINIT_URL }}"
-  #       env:
-  #         REINIT_URL: ${{ secrets.REINIT_URL }}  # Add this secret in your repository settings
+    steps:
+      - name: Send reinit request
+        run: |
+          echo "Reinitializing application..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.REINIT_URL }}")
+          
+          if [ "$response" -eq 200 ]; then
+            echo "Application reinitialized successfully"
+          else
+            echo "::error::Failed to reinitialize application. HTTP Status: $response"
+            exit 1
+          fi
