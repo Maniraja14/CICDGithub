@@ -35,8 +35,6 @@ jobs:
           echo "box is started"
           box testbox run --directory=tests.specs --reporter=json > test-results.json
 
-          cat test-results.json
-
           # Check test results
           if [ $(grep -o '"Failed": 0' test-results.json | wc -l) -eq 0 ]; then
             echo "::error::Some tests failed"
