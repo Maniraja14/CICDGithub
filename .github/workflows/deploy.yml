@@ -41,7 +41,18 @@ jobs:
         run: |
           box install
           box install testbox
-          box testbox run --directory=tests.specs --reporter=json
+          box testbox run --directory=tests.specs --reporter=json > test-results.json
+
+
+      # Step 5: Verify test results
+      - name: Verify Test Results
+        run: |
+          if grep -q '"Failed": 0' test-results.json; then
+            echo "All tests passed."
+          else
+            echo "Tests failed. Stopping workflow."
+            exit 1
+          fi
 
   # Job 2: Deploy to FTP server (only runs if test job passes)
   deploy:
@@ -63,3 +74,13 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}   #  FTP password
           local-dir: ./                           # Local folder to upload
           server-dir: /github/                    # Remote FTP folder (must end with /)
+  reinit:
+    name: Reinit Application
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reinitialize Application
+        run: |
+          curl -X GET "${{ secrets.REINIT_URL }}"
+        env:
+          REINIT_URL: ${{ secrets.REINIT_URL }}  # Add this secret in your repository settings
