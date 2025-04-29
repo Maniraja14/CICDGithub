@@ -30,11 +30,10 @@ jobs:
       - name: Install dependencies and run tests
         run: |
           box install
-          sleep 5  # Wait for CommandBox to fully initialize
           box install testbox
-          Sleep 5  # Wait for TestBox to fully initialize
+          box start
           box testbox run --directory=tests.specs --reporter=json > test-results.json
-          
+
           # Check test results
           if [ $(grep -o '"Failed": 0' test-results.json | wc -l) -eq 0 ]; then
             echo "::error::Some tests failed"
