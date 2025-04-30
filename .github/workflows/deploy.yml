@@ -33,55 +33,57 @@ jobs:
           box install testbox
           box start
           echo "box is started"
-          box testbox run --directory=tests.specs --reporter=json > test-results.json
+          box testbox run --directory=tests.specs > test-results.txt
 
-          # # Check test results
-          # if [ $(grep -o '"Failed": 0' test-results.json | wc -l) -eq 0 ]; then
-          #   echo "::error::Some tests failed"
-          #   cat test-results.json
-          #   exit 1
-          # fi
-          echo "All tests passed successfully"
-
-  deploy:
-    name: FTP Deploy
-    runs-on: ubuntu-latest
-    needs: test
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: FTP Deploy
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: ${{ secrets.FTP_DEPLOY_DIR }}/  # Should end with /
-          exclude: |
-            **/.git*
-            **/.github*
-            **/tests*
-            **/test-results.json
-            **/box.json
-            **/commandbox-debian-6.2.0.deb
-
-  reinit:
-    name: Reinitialize Application
-    runs-on: ubuntu-latest
-    needs: deploy  # Only run after successful deployment
-
-    steps:
-      - name: Send reinit request
-        run: |
-          echo "Reinitializing application..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.REINIT_URL }}")
-          
-          if [ "$response" -eq 200 ]; then
-            echo "Application reinitialized successfully"
-          else
-            echo "::error::Failed to reinitialize application. HTTP Status: $response"
+          failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
+          if [ "$failedCount" -ne 0 ]; then
+            echo "::error::Some tests failed"
+            cat test-results.txt
             exit 1
           fi
+
+          echo "All tests passed successfully"
+
+
+  # deploy:
+  #   name: FTP Deploy
+  #   runs-on: ubuntu-latest
+  #   needs: test
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: FTP Deploy
+  #       uses: SamKirkland/FTP-Deploy-Action@4.3.0
+  #       with:
+  #         server: ${{ secrets.FTP_SERVER }}
+  #         username: ${{ secrets.FTP_USERNAME }}
+  #         password: ${{ secrets.FTP_PASSWORD }}
+  #         local-dir: ./
+  #         server-dir: ${{ secrets.FTP_DEPLOY_DIR }}/  # Should end with /
+  #         exclude: |
+  #           **/.git*
+  #           **/.github*
+  #           **/tests*
+  #           **/test-results.json
+  #           **/box.json
+  #           **/commandbox-debian-6.2.0.deb
+
+  # reinit:
+  #   name: Reinitialize Application
+  #   runs-on: ubuntu-latest
+  #   needs: deploy  # Only run after successful deployment
+
+  #   steps:
+  #     - name: Send reinit request
+  #       run: |
+  #         echo "Reinitializing application..."
+  #         response=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.REINIT_URL }}")
+          
+  #         if [ "$response" -eq 200 ]; then
+  #           echo "Application reinitialized successfully"
+  #         else
+  #           echo "::error::Failed to reinitialize application. HTTP Status: $response"
+  #           exit 1
+  #         fi
