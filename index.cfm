@@ -1,2 +1,7 @@
-It is updated after Github deployment. Before testing.
-This is a demo application for GitHub CI/CD <cfoutput>#now()#</cfoutput>
+<cfoutput>
+    <h1>Hello World</h1>
+
+    <p>This is a sample ColdFusion application built with TestBox and deployed via FTP.</p>
+
+    <p>The time is: #now()#</p>
+</cfoutput>
