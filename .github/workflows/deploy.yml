@@ -42,9 +42,8 @@ jobs:
         env:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
-          entrypoint: /opt/box/box
-          run: start
-              testbox run --directory=tests.specs > test-results.txt
+          run: box start
+              box testbox run --directory=tests.specs > test-results.txt
 
               failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
 
