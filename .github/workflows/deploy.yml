@@ -30,7 +30,7 @@ jobs:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
           entrypoint: /opt/box/box
-          args: start && testbox run
+          args: install testbox && start && testbox run
       - name: Check Test Results
         run: |
           failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
