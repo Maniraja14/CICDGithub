@@ -1,3 +1,3 @@
  <cfquery>
     SELECT * FROM USer
-</neww>
+</cfquery>
