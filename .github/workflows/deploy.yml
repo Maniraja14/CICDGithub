@@ -12,10 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: cfcompile
-      uses: docker://foundeo/cfml-ci-tools:latest
+      uses: foundeo/cfml-compiler-action@master
       with:
-        entrypoint: /opt/box/box
-        args: box cfcompile sourcePath=/ destPath=/tmp/ cfengine=$1
+        cfengine: lucee@5.4.3.2
 
   test:
     name: Run TestBox Tests
@@ -31,7 +30,7 @@ jobs:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
           entrypoint: /opt/box/box
-          args: start
+          args: box start
             testbox run --directory=tests.specs > test-results.txt
               failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
               if [ "$failedCount" -ne 0 ]; then
