@@ -7,6 +7,19 @@ on:
     branches: [main, staging]
 
 jobs:
+  acfcompile:
+    runs-on: ubuntu-latest
+    container:
+      image: adobecoldfusion/coldfusion2021:2021.0.13
+    env:
+      acceptEULA: YES
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      # Runs the cfcompile command inside the docker container
+      - name: Compile CFML
+        run: /opt/coldfusion/cfusion/bin/cfcompile.sh -cfruntimeuser root -webroot $GITHUB_WORKSPACE -dir $GITHUB_WORKSPACE
   cfcompile:
     runs-on: ubuntu-latest
     steps:
@@ -19,7 +32,7 @@ jobs:
   test:
     name: Run TestBox Tests
     runs-on: ubuntu-latest
-    needs: [cfcompile]  # Only run after successful compilation and code checking
+    needs: [cfcompile, acfcompile]  # Only run after successful compilation and code checking
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,9 +43,11 @@ jobs:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
           entrypoint: /opt/box/box
-          args: box start
-            testbox run --directory=tests.specs > test-results.txt
+          run: start
+              testbox run --directory=tests.specs > test-results.txt
+
               failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
+
               if [ "$failedCount" -ne 0 ]; then
                 echo "::error::Some tests failed"
                 cat test-results.txt
