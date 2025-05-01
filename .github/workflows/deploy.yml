@@ -29,10 +29,10 @@ jobs:
         env:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
-          run: |
-              box start
-              echo "box is started"
-              box testbox run --directory=tests.specs > test-results.txt
+          entrypoint: /opt/box/box
+          args: |
+            start
+            testbox run >test-results.txt
       - name: Check Test Results
         run: |
           failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
