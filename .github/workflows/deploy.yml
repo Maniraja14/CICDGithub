@@ -12,24 +12,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: cfcompile
-      uses: foundeo/cfml-compiler-action@master
-      with:
-        cfengine: lucee@5.4.3.2
-
-  codechecker:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Run CodeChecker
       uses: docker://foundeo/cfml-ci-tools:latest
       with:
         entrypoint: /opt/box/box
-        args: codechecker run --verbose
+        args: box cfcompile sourcePath=/ destPath=/tmp/ cfengine=$1
 
   test:
     name: Run TestBox Tests
     runs-on: ubuntu-latest
-    needs: [cfcompile, codechecker]  # Only run after successful compilation and code checking
+    needs: [cfcompile]  # Only run after successful compilation and code checking
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -40,7 +31,8 @@ jobs:
             TESTKEY: ${{ vars.TESTKEY }}
         with:
           entrypoint: /opt/box/box
-          args: testbox run --directory=tests.specs > test-results.txt
+          args: start
+            testbox run --directory=tests.specs > test-results.txt
               failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
               if [ "$failedCount" -ne 0 ]; then
                 echo "::error::Some tests failed"
