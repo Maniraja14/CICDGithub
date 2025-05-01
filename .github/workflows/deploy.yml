@@ -31,8 +31,7 @@ jobs:
         with:
           entrypoint: /opt/box/box
           run: |
-            start 
-            testbox run
+            start && testbox run
       - name: Check Test Results
         run: |
           failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
@@ -42,42 +41,42 @@ jobs:
             exit 1
           fi
           echo "All tests passed successfully"
-  # ftp_deploy:
-  #   name: FTP Deploy
-  #   runs-on: ubuntu-latest
-  #   needs: test
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v3
+  ftp_deploy:
+    name: FTP Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  #     - name: FTP Deploy
-  #       uses: SamKirkland/FTP-Deploy-Action@4.3.0
-  #       with:
-  #         server: ${{ vars.FTP_SERVER }}
-  #         username: ${{ vars.FTP_USERNAME }}
-  #         password: ${{ secrets.FTP_PASSWORD }}
-  #         local-dir: ./
-  #         exclude: |
-  #           .git*
-  #           .github*
-  #           tests/*
-  #           box.json
-  #           commandbox-debian-6.2.0.deb
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: ${{ vars.FTP_SERVER }}
+          username: ${{ vars.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          exclude: |
+            .git*
+            .github*
+            tests/*
+            box.json
+            commandbox-debian-6.2.0.deb
 
-  # reinit:
-  #   name: Reinitialize Application
-  #   runs-on: ubuntu-latest
-  #   needs: [ftp_deploy]  # Only run after successful deployment
+  reinit:
+    name: Reinitialize Application
+    runs-on: ubuntu-latest
+    needs: [ftp_deploy]  # Only run after successful deployment
 
-  #   steps:
-  #     - name: Send reinit request
-  #       run: |
-  #         echo "Reinitializing application..."
-  #         response=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.REINIT_URL }}")
+    steps:
+      - name: Send reinit request
+        run: |
+          echo "Reinitializing application..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ vars.REINIT_URL }}")
           
-  #         if [ "$response" -eq 200 ]; then
-  #           echo "Application reinitialized successfully"
-  #         else
-  #           echo "::error::Failed to reinitialize application. HTTP Status: $response"
-  #           exit 1
-  #         fi
+          if [ "$response" -eq 200 ]; then
+            echo "Application reinitialized successfully"
+          else
+            echo "::error::Failed to reinitialize application. HTTP Status: $response"
+            exit 1
+          fi
