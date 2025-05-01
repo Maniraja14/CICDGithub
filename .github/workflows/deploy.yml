@@ -34,38 +34,21 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Java (required for CommandBox)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
-
-      - name: Install CommandBox
-        run: |
-          curl -LO https://s3.amazonaws.com/downloads.ortussolutions.com/ortussolutions/commandbox/6.2.0/commandbox-debian-6.2.0.deb
-          sudo dpkg -i commandbox-debian-6.2.0.deb
-          box version
-
       - name: Install dependencies and run tests
+        uses: docker://foundeo/cfml-ci-tools:latest
         env:
             TESTKEY: ${{ vars.TESTKEY }}
+        with:
+          entrypoint: /opt/box/box
+          args: testbox run --directory=tests.specs > test-results.txt
+              failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
+              if [ "$failedCount" -ne 0 ]; then
+                echo "::error::Some tests failed"
+                cat test-results.txt
+                exit 1
+              fi
 
-        run: |
-          box install
-          box install testbox
-          box start
-          echo "box is started"
-          box testbox run --directory=tests.specs > test-results.txt
-
-          failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
-          if [ "$failedCount" -ne 0 ]; then
-            echo "::error::Some tests failed"
-            cat test-results.txt
-            exit 1
-          fi
-
-          echo "All tests passed successfully"
-
+              echo "All tests passed successfully"
   # ftp_deploy:
   #   name: FTP Deploy
   #   runs-on: ubuntu-latest
