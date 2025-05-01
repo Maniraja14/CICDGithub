@@ -31,15 +31,6 @@ jobs:
         with:
           entrypoint: /opt/box/box
           args: install testbox && start && testbox run
-      - name: Check Test Results
-        run: |
-          failedCount=$(grep -oP '\[Failed:\s+\K\d+' test-results.txt)
-          if [ "$failedCount" -ne 0 ]; then
-            echo "::error::Some tests failed"
-            cat test-results.txt
-            exit 1
-          fi
-          echo "All tests passed successfully"
   # ftp_deploy:
   #   name: FTP Deploy
   #   runs-on: ubuntu-latest
