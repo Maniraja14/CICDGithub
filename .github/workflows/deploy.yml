@@ -31,7 +31,6 @@ jobs:
         with:
           entrypoint: /opt/box/box
           args: |
-            start
             testbox run >test-results.txt
       - name: Check Test Results
         run: |
