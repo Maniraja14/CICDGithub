@@ -1,4 +1,4 @@
-name: CI
+name: CI - Complie, Test, Deploy, and Reinit
 
 on:
   push:
