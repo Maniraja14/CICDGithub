@@ -1,29 +1,26 @@
-name: CI - Complie, Test, Deploy, and Reinit
+# This is the name of the GitHub Actions workflow. It appears in the GitHub UI.
+name: Github Actions for Compile, test, deploy and Reinit Application.
 
+# The `on` section defines the trigger events for the workflow.
 on:
   push:
-    branches: [main, staging]
+    branches: main  # Trigger workflow when code is pushed to the 'main' branch
   pull_request:
-    branches: [main, staging]
+    branches: main  # Trigger workflow when a pull request targets the 'main' branch
 
+# Define the jobs that run in this workflow
 jobs:
-    ftp_deploy:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v3
-        - name: Deploy to Staging server
-          uses: easingthemes/ssh-deploy@main
-          with:
-            SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATEKEY }}
-            ARGS: "-rlgoDzvc -i"
-            SOURCE: "dist/"
-            REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-            REMOTE_USER: ${{ secrets.REMOTE_USER }}
-            SCRIPT_BEFORE: |
-              whoami
-              ls -al
-            SCRIPT_AFTER: |
-              whoami
-              ls -al
-              echo $RSYNC_STDOUT
+  # Job 1: ColdFusion code compilation
+  cfcompile:
+    runs-on: ubuntu-latest
+    container:
+      image: adobecoldfusion/coldfusion2021:2021.0.10
+    env:
+      acceptEULA: YES
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
+
+      # Runs the cfcompile command inside the docker container
+      - name: Compile CFML
+        run: /opt/coldfusion/cfusion/bin/cfcompile.sh -cfruntimeuser root -webroot $GITHUB_WORKSPACE -dir $GITHUB_WORKSPACE
